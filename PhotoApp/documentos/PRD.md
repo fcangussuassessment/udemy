@@ -1,423 +1,463 @@
-# PRD — PhotoApp: Organizador de Fotos Inteligente
+# PRD — Lumina: Organizador de Fotos com IA
 
 | Campo | Valor |
 |---|---|
-| **Produto** | PhotoApp (nome provisório) |
+| **Produto** | Lumina (nome provisório) |
+| **Versão do documento** | 0.2 |
+| **Data** | 2026-10-19 |
 | **Autor** | Fernando |
-| **Status** | Rascunho v0.1 |
-| **Última atualização** | 2026-10-19 |
+| **Status** | Rascunho |
+| **Natureza** | Projeto de estudo — exercício de uso do Claude para gerar o app. Gratuito, sem qualquer custo para o usuário |
 
 ---
 
-## 1. Resumo
+## Sumário
 
-O PhotoApp é um gerenciador de fotos bonito, poderoso e fácil de usar. Com ele, o usuário consegue **importar, catalogar, organizar, editar e encontrar** as suas fotos. A organização usa **álbuns** e **tags livres**, e a **inteligência artificial** ajuda a aprimorar imagens e a pesquisar por linguagem natural (ex.: *"praia ao pôr do sol com o cachorro"*).
-
-O produto quer ficar entre dois extremos. De um lado estão os apps simples (Google Fotos, Apple Fotos), fáceis de usar mas pouco controláveis. Do outro estão as ferramentas profissionais (Lightroom, Capture One), poderosas mas complexas. O PhotoApp quer ser **simples por padrão e profundo quando necessário**.
-
----
-
-## 2. Problema e oportunidade
-
-### 2.1 Problema
-- As pessoas acumulam **milhares de fotos** espalhadas entre celular, HD externo, nuvem e redes sociais, e não conseguem achar o que procuram.
-- Organizar fotos à mão (pastas, renomear arquivos) é **chato e não escala**.
-- Os apps de consumo organizam de forma automática, mas **opaca**. O usuário controla pouco as tags e os álbuns e não consegue levar os dados para outro app (*lock-in*).
-- As ferramentas profissionais exigem **curva de aprendizado alta** e editar nelas toma tempo.
-- Muita gente não aceita mandar as fotos para a nuvem de terceiros e quer **privacidade**.
-
-### 2.2 Oportunidade
-- Os modelos de IA multimodal (embeddings de imagem e texto, segmentação, *upscaling*, *inpainting*) já são maduros e muitos rodam **localmente**.
-- Isso permite oferecer uma busca semântica e uma automação de organização que antes só existiam em plataformas gigantes, **sem abrir mão da privacidade**.
+1. [Visão geral e problema](#1-visão-geral-e-problema)
+2. [Objetivos e não-objetivos](#2-objetivos-e-não-objetivos)
+3. [Personas](#3-personas)
+4. [Requisitos funcionais](#4-requisitos-funcionais)
+5. [Requisitos não-funcionais](#5-requisitos-não-funcionais)
+6. [Experiência e design](#6-experiência-e-design)
+7. [Arquitetura proposta](#7-arquitetura-proposta)
+8. [Modelo de dados](#8-modelo-de-dados)
+9. [User stories e critérios de aceite](#9-user-stories-e-critérios-de-aceite)
+10. [Escopo por fase](#10-escopo-por-fase)
+11. [Métricas de sucesso](#11-métricas-de-sucesso)
+12. [Riscos e mitigações](#12-riscos-e-mitigações)
+13. [Questões em aberto](#13-questões-em-aberto)
+14. [Glossário](#14-glossário)
 
 ---
 
-## 3. Objetivos e não-objetivos
+## 1. Visão geral e problema
 
-### 3.1 Objetivos
-1. **Encontrar qualquer foto em menos de 10 segundos**, por texto livre, pessoa, lugar, data ou tag.
-2. **Organizar sem esforço**: a IA sugere tags, álbuns e agrupamentos, e o usuário aceita ou ajusta.
-3. **Editar com qualidade** de forma não destrutiva: o original nunca é alterado.
-4. **Navegação fluida** em bibliotecas de mais de 100 mil fotos.
-5. **O usuário é dono dos dados**: os metadados podem ser exportados em padrões abertos (XMP/IPTC) e a biblioteca funciona offline.
+### 1.1 Problema
 
-### 3.2 Não-objetivos (por enquanto)
-- Não é uma rede social nem tem feed público.
-- Não substitui editores de pixel avançados (camadas, máscaras complexas, composições do tipo Photoshop).
-- Não terá edição de vídeo no MVP (vídeos podem ser catalogados, mas não editados).
-- Não terá ferramentas de fluxo de trabalho para estúdios ou agências (aprovação de cliente, faturamento).
+As pessoas acumulam milhares de fotos espalhadas entre pastas do computador, HDs externos, cartões de memória e downloads do celular. Encontrar uma foto específica ("aquela do aniversário na praia em 2022") é lento e frustrante. As alternativas atuais têm limitações:
 
----
+- **Ferramentas profissionais** (ex.: Lightroom) são poderosas, mas caras, pesadas e com curva de aprendizado alta.
+- **Serviços em nuvem** (ex.: Google Fotos, iCloud) são fáceis, mas exigem enviar toda a biblioteca para terceiros, e prendem o usuário ao ecossistema.
+- **Gerenciadores de arquivos do sistema** não oferecem álbuns, tags, avaliação, edição nem busca por conteúdo.
 
-## 4. Personas
+### 1.2 Proposta de valor
 
-| Persona | Perfil | Dor principal | O que precisa |
-|---|---|---|---|
-| **Ana, a memorialista** | 35 anos, mãe, tem 40 mil fotos no celular | "Nunca acho a foto que quero mostrar" | Busca simples, álbuns automáticos de eventos e pessoas |
-| **Bruno, o entusiasta** | 28 anos, fotógrafo amador, usa câmera com RAW | "O Lightroom é caro e pesado" | Suporte a RAW, edição não destrutiva, presets, avaliação por estrelas |
-| **Carla, a criadora** | 31 anos, produz conteúdo para redes | "Perco tempo escolhendo e tratando fotos" | Curadoria por IA (melhores fotos), aprimoramento rápido, exportação para redes |
-| **Diego, o arquivista** | 60 anos, está digitalizando fotos antigas da família | "Fotos escaneadas não têm data nem contexto" | Restauração por IA, edição de metadados em lote, reconhecimento facial |
+**Lumina** é um gerenciador de fotos **web, local-first e com IA**: roda no navegador, trabalha diretamente com as fotos no disco do usuário (sem upload da biblioteca), oferece uma interface bonita e rápida para catalogar, organizar em álbuns, marcar com tags e editar de forma não-destrutiva — e usa IA (Claude) para gerar tags e legendas automaticamente, sugerir aprimoramentos e permitir **busca em linguagem natural**.
+
+> *"Todas as suas fotos, organizadas e encontráveis em segundos — sem abrir mão da privacidade."*
 
 ---
 
-## 5. Princípios de produto
+## 2. Objetivos e não-objetivos
 
-1. **Simples por padrão, poderoso sob demanda**: os recursos avançados ficam acessíveis, mas não poluem a interface.
-2. **O original é sagrado**: toda edição é não destrutiva e reversível.
-3. **A IA sugere, o usuário decide**: nenhuma organização automática é aplicada sem que dê para revisar ou desfazer.
-4. **Privacidade em primeiro lugar**: o processamento local é o padrão, e a nuvem é opcional e explícita.
-5. **Velocidade é um recurso**: nenhuma interação comum deve passar de 100 ms de resposta percebida.
-6. **Dados abertos**: nada de formato proprietário que prenda o usuário.
+### 2.1 Objetivos
+
+| # | Objetivo | Como mediremos |
+|---|---|---|
+| O1 | Permitir que o usuário importe e navegue por uma biblioteca grande de forma fluida | Grade fluida (60 fps) com 50 mil fotos |
+| O2 | Tornar a organização (álbuns, tags, avaliações) rápida, inclusive em lote | Tempo médio para organizar 100 fotos < 5 min |
+| O3 | Fazer qualquer foto ser encontrável por descrição em linguagem natural | ≥ 80% de buscas IA com clique em um dos 10 primeiros resultados |
+| O4 | Oferecer edição não-destrutiva suficiente para 90% dos ajustes do dia a dia | % de fotos editadas exportadas sem uso de outra ferramenta |
+| O5 | Preservar a privacidade: originais nunca saem do dispositivo | 0 originais enviados; IA apenas com consentimento explícito |
+
+### 2.2 Não-objetivos
+
+- **Não tem monetização:** o app é **100% gratuito** — sem planos pagos, assinaturas, quotas de uso, anúncios ou compras.
+- **Não é rede social:** sem feed, curtidas ou perfis públicos.
+- **Não substitui o Photoshop:** sem camadas, máscaras avançadas, clonagem ou retoque de pele no MVP.
+- **Não é armazenamento em nuvem:** no MVP não hospedamos as fotos do usuário.
+- **Não é app mobile nativo** no MVP (a versão web deve ser responsiva, mas o foco é desktop).
+- **Não processa vídeos** no MVP (vídeos podem ser listados, mas sem edição).
 
 ---
 
-## 6. Requisitos funcionais
+## 3. Personas
 
-**Prioridade (MoSCoW):** **M** = Must (MVP) · **S** = Should (v1) · **C** = Could (v2+) · **W** = Won't (fora do escopo atual)
+### 3.1 Marina — Fotógrafa entusiasta (persona primária)
+- 32 anos, fotografa com câmera mirrorless nos fins de semana; ~40 mil fotos em HD externo.
+- **Necessidades:** importar cartões rapidamente, avaliar e descartar fotos ruins, ajustar exposição/cor, exportar para redes sociais.
+- **Dores:** Lightroom é pesado e complexo; perde tempo procurando fotos antigas.
+- **Frase:** *"Quero escolher as 20 melhores de uma sessão de 600 fotos em meia hora."*
 
-### 6.1 Importação e catalogação
+### 3.2 Carlos — Guardião das memórias da família
+- 45 anos, junta fotos de celular da família inteira em uma pasta no PC; ~15 mil fotos desorganizadas.
+- **Necessidades:** álbuns por evento ("Natal 2024"), achar fotos por pessoa/lugar, remover duplicatas.
+- **Dores:** não tem paciência para marcar foto por foto; desconfia de enviar fotos dos filhos para a nuvem.
+- **Frase:** *"Quero digitar 'vovó no sítio' e a foto aparecer."*
 
-| ID | Requisito | Prioridade |
-|---|---|---|
-| IMP-01 | Importar fotos de pastas locais, cartão de memória e dispositivos conectados | M |
-| IMP-02 | Formatos suportados: JPEG, PNG, HEIC/HEIF, WebP, TIFF, GIF | M |
-| IMP-03 | Suporte a RAW (CR2/CR3, NEF, ARW, DNG, RAF, ORF) | S |
-| IMP-04 | Catalogar vídeos (MP4, MOV) com miniatura e metadados, sem edição | S |
-| IMP-05 | Dois modos de armazenamento: **referenciado** (os arquivos ficam onde estão) ou **gerenciado** (são copiados para a biblioteca) | M |
-| IMP-06 | Ler metadados EXIF, IPTC e XMP (data, câmera, lente, GPS, exposição) | M |
-| IMP-07 | Monitorar pastas (*watch folders*) e importar novas fotos automaticamente | S |
-| IMP-08 | Detectar duplicatas exatas (hash) na importação, com opção de pular | M |
-| IMP-09 | Detectar fotos quase duplicadas ou em sequência (*burst*) por similaridade visual | S |
-| IMP-10 | Importação em segundo plano, com progresso, sem travar a interface | M |
-| IMP-11 | Importar de serviços de nuvem (Google Fotos, iCloud, OneDrive) | C |
-| IMP-12 | Renomear arquivos na importação usando modelos (ex.: `{data}_{evento}_{seq}`) | C |
-
-### 6.2 Biblioteca e navegação
-
-| ID | Requisito | Prioridade |
-|---|---|---|
-| BIB-01 | Grade de miniaturas com zoom contínuo (de densa a ampla) e rolagem virtualizada | M |
-| BIB-02 | Visualização em linha do tempo agrupada por ano, mês e dia, com navegação rápida por barra lateral | M |
-| BIB-03 | Visualizador em tela cheia com zoom, pan e navegação por teclado ou gestos | M |
-| BIB-04 | Painel de informações com metadados, tags, álbuns e mapa | M |
-| BIB-05 | Visualização em mapa das fotos com GPS, com agrupamento por região | S |
-| BIB-06 | Modo comparação: 2 a 4 fotos lado a lado com zoom sincronizado | S |
-| BIB-07 | Seleção múltipla (clique, Shift, Ctrl/Cmd, arrastar) e ações em lote | M |
-| BIB-08 | Lixeira com retenção configurável (padrão: 30 dias) | M |
-| BIB-09 | Ordenação por data de captura, data de importação, nome, avaliação e tamanho | M |
-| BIB-10 | Pilhas: agrupar variações (RAW+JPEG, sequências, edições) sob uma foto "capa" | S |
-| BIB-11 | Atalhos de teclado para todas as ações frequentes | M |
-
-### 6.3 Álbuns
-
-| ID | Requisito | Prioridade |
-|---|---|---|
-| ALB-01 | Criar, renomear e excluir álbuns manuais | M |
-| ALB-02 | Uma foto pode pertencer a vários álbuns sem duplicar o arquivo | M |
-| ALB-03 | Escolher a capa do álbum e reordenar as fotos manualmente | M |
-| ALB-04 | Pastas de álbuns (hierarquia, ex.: `Viagens > 2025 > Japão`) | S |
-| ALB-05 | **Álbuns inteligentes**: regras dinâmicas (ex.: *tag = "família" E avaliação ≥ 4 E ano = 2025*) | S |
-| ALB-06 | **Álbuns sugeridos por IA**: eventos detectados por tempo e lugar ("Viagem a Salvador, mar 2025") | S |
-| ALB-07 | Arrastar e soltar fotos em álbuns na barra lateral | M |
-| ALB-08 | Álbuns compartilhados com outros usuários (somente leitura ou colaborativos) | C |
-
-### 6.4 Tags, classificação e metadados
-
-| ID | Requisito | Prioridade |
-|---|---|---|
-| TAG-01 | Tags livres, com autocompletar e criação em linha | M |
-| TAG-02 | Tags hierárquicas (ex.: `Animais > Cachorro > Thor`) | S |
-| TAG-03 | Avaliação por estrelas (0 a 5), favorito (coração) e marcação de seleção ou rejeição (*pick/reject*) | M |
-| TAG-04 | Rótulos de cor (vermelho, amarelo, verde, azul, roxo) | S |
-| TAG-05 | Editar em lote título, descrição, data, local e direitos autorais | M |
-| TAG-06 | Corrigir data e hora em lote (ex.: ajustar o fuso de uma viagem) | S |
-| TAG-07 | Geomarcação manual: arrastar fotos para o mapa ou buscar um endereço | S |
-| TAG-08 | Gravar metadados em XMP *sidecar* ou embutidos no arquivo, conforme preferência | S |
-| TAG-09 | Gerenciador de tags: renomear, mesclar, mover na hierarquia e ver a contagem de uso | S |
-| TAG-10 | Tags sugeridas pela IA aparecem separadas das tags confirmadas, para aceitar ou rejeitar | M |
-
-### 6.5 Edição (não destrutiva)
-
-| ID | Requisito | Prioridade |
-|---|---|---|
-| EDT-01 | Toda edição é gravada como uma pilha de instruções, e o original nunca é modificado | M |
-| EDT-02 | Recortar, endireitar, girar, espelhar e escolher proporção (livre, 1:1, 4:3, 16:9, 4:5, 9:16) | M |
-| EDT-03 | Ajustes básicos: exposição, contraste, realces, sombras, brancos, pretos | M |
-| EDT-04 | Cor: temperatura, matiz, vibração, saturação | M |
-| EDT-05 | Detalhe: nitidez, redução de ruído, clareza, textura | S |
-| EDT-06 | Curvas (RGB e por canal) e HSL por cor | S |
-| EDT-07 | Vinheta, granulação e correção de lente (perfis) | S |
-| EDT-08 | Filtros e presets prontos, com a possibilidade de criar, salvar e compartilhar presets próprios | M |
-| EDT-09 | Copiar e colar ajustes entre fotos e aplicar em lote | M |
-| EDT-10 | Histórico com desfazer/refazer ilimitado e "snapshots" nomeados | M |
-| EDT-11 | Comparar antes e depois (tecla segurada ou divisor deslizante) | M |
-| EDT-12 | Ajustes locais com máscaras: pincel, gradiente linear e radial | C |
-| EDT-13 | Pré-visualização em tempo real (ver requisitos de desempenho) | M |
-| EDT-14 | Criar "versões virtuais": várias edições do mesmo original | S |
-
-### 6.6 Inteligência artificial
-
-#### 6.6.1 Busca e organização
-
-| ID | Requisito | Prioridade |
-|---|---|---|
-| IA-01 | **Busca semântica em linguagem natural**, em português e inglês (ex.: *"bolo de aniversário com velas"*) | M |
-| IA-02 | **Auto-tagging**: detectar objetos, cenas, atividades e animais e sugerir tags | M |
-| IA-03 | **Reconhecimento facial**: agrupar rostos e permitir nomear pessoas. Recurso **opt-in**, ver §7.3 | S |
-| IA-04 | Busca por similaridade: "encontrar fotos parecidas com esta" | S |
-| IA-05 | OCR: extrair texto visível nas fotos (placas, documentos, cardápios) e torná-lo pesquisável | S |
-| IA-06 | **Curadoria automática**: pontuar a qualidade estética e técnica (foco, olhos fechados, tremida) e sugerir as melhores de cada sequência | S |
-| IA-07 | Legendas automáticas (descrição da cena) para acessibilidade e busca | S |
-| IA-08 | Detecção de eventos e viagens para sugerir álbuns (ver ALB-06) | S |
-| IA-09 | Detecção de capturas de tela, documentos e memes, com sugestão de limpeza | C |
-| IA-10 | "Memórias": retrospectivas automáticas ("há 5 anos") | C |
-
-#### 6.6.2 Aprimoramento
-
-| ID | Requisito | Prioridade |
-|---|---|---|
-| IA-20 | **Auto-aprimorar em um clique**: ajuste automático de exposição, cor e contraste | M |
-| IA-21 | **Upscaling** (super-resolução 2x/4x) | S |
-| IA-22 | **Redução de ruído por IA** (especialmente em ISO alto e RAW) | S |
-| IA-23 | **Remoção de objetos e pessoas** (*inpainting*) com pincel ou seleção automática | S |
-| IA-24 | **Remoção e troca de fundo** com recorte automático de sujeito | S |
-| IA-25 | **Restauração de fotos antigas**: arranhões, desbotamento, colorização | C |
-| IA-26 | Correção de desfoque leve e de tremido | C |
-| IA-27 | Máscaras inteligentes: selecionar céu, sujeito ou fundo automaticamente para ajustes locais | C |
-| IA-28 | Edição por comando de texto (ex.: *"deixe o céu mais dramático"*) | C |
-
-#### 6.6.3 Regras gerais de IA
-
-- **IA-R1**: Toda saída da IA é **reversível**. Aprimoramentos geram uma nova versão ou entram na pilha de edição e nunca sobrescrevem o original.
-- **IA-R2**: Sugestões (tags, álbuns, nomes de pessoas) ficam visualmente diferentes de dados confirmados pelo usuário.
-- **IA-R3**: Antes de qualquer processamento **em nuvem**, o app avisa o usuário de forma explícita e pede consentimento, por recurso.
-- **IA-R4**: A indexação de IA roda em segundo plano, pode ser pausada e respeita bateria e uso de CPU/GPU, com um modo "só quando ocioso ou conectado à energia".
-- **IA-R5**: O usuário pode desativar qualquer recurso de IA por completo.
-
-### 6.7 Busca
-
-| ID | Requisito | Prioridade |
-|---|---|---|
-| BUS-01 | Uma barra de busca única que combina texto livre (semântico), tags, pessoas, lugares, datas, câmera e álbuns | M |
-| BUS-02 | Filtros por facetas: data (intervalo), avaliação, rótulo de cor, tipo de arquivo, câmera/lente, orientação, com GPS ou sem GPS, editada ou não | M |
-| BUS-03 | Operadores e *chips* combináveis (ex.: `pessoa:Ana` `lugar:Rio` `2024` `★≥4`) | S |
-| BUS-04 | Salvar uma busca como álbum inteligente | S |
-| BUS-05 | Sugestões e autocompletar enquanto o usuário digita | M |
-| BUS-06 | Resultados em menos de 500 ms em uma biblioteca de 100 mil fotos (ver §7.1) | M |
-
-### 6.8 Exportação e compartilhamento
-
-| ID | Requisito | Prioridade |
-|---|---|---|
-| EXP-01 | Exportar com as edições aplicadas, escolhendo formato (JPEG, PNG, TIFF, WebP, AVIF), qualidade e tamanho | M |
-| EXP-02 | Presets de exportação (ex.: "Instagram 4:5 1080px", "Impressão 300dpi") | S |
-| EXP-03 | Controle de metadados na exportação: remover GPS, manter apenas os direitos autorais etc. | M |
-| EXP-04 | Marca d'água (texto ou imagem) opcional | C |
-| EXP-05 | Compartilhar pelo menu nativo do sistema operacional | M |
-| EXP-06 | Link de compartilhamento público ou privado para um álbum (requer nuvem) | C |
-| EXP-07 | Exportar o catálogo inteiro (metadados em XMP e JSON) para portabilidade | S |
-
-### 6.9 Sincronização e backup
-
-| ID | Requisito | Prioridade |
-|---|---|---|
-| SYN-01 | Backup automático do catálogo (banco de dados) com versões | M |
-| SYN-02 | Sincronizar a biblioteca entre dispositivos (desktop ↔ mobile) | C |
-| SYN-03 | Backup das fotos originais em nuvem própria ou em um provedor externo (S3, Backblaze, OneDrive) | C |
-| SYN-04 | Verificar integridade: detectar arquivos ausentes ou movidos e permitir reconectar | S |
+### 3.3 Júlia — Criadora de conteúdo
+- 27 anos, produz conteúdo para Instagram e blog; reutiliza fotos em várias campanhas.
+- **Necessidades:** tags por cliente/campanha, texto alternativo e legendas, exportação em vários tamanhos.
+- **Dores:** escrever legendas e alt text toma tempo; difícil saber quais fotos já foram usadas.
+- **Frase:** *"Preciso achar 'fotos verticais de café com luz natural' para o próximo post."*
 
 ---
 
-## 7. Requisitos não funcionais
+## 4. Requisitos funcionais
 
-### 7.1 Desempenho
+Prioridade (MoSCoW): **M** = Must (obrigatório no MVP), **S** = Should, **C** = Could, **W** = Won't (agora).
 
-| Métrica | Meta |
+### 4.1 Importação
+
+| ID | Requisito | Prioridade |
+|---|---|---|
+| RF-01 | Adicionar uma ou mais **pastas locais** à biblioteca via File System Access API, com varredura recursiva | M |
+| RF-02 | Importar arquivos por **arrastar e soltar** e por seletor de arquivos (fallback para navegadores sem File System Access API) | M |
+| RF-03 | Suportar JPEG, PNG, WebP e GIF; HEIC/AVIF quando o navegador suportar | M |
+| RF-04 | Ler metadados **EXIF/IPTC/XMP** (data, câmera, lente, ISO, abertura, GPS, orientação) | M |
+| RF-05 | Gerar miniaturas em segundo plano, com barra de progresso e possibilidade de cancelar | M |
+| RF-06 | Detectar **duplicatas exatas** (hash do arquivo) e **quase duplicatas** (hash perceptual) | S |
+| RF-07 | Monitorar pastas e detectar arquivos novos/removidos ao reabrir o app | S |
+| RF-08 | Suporte a arquivos RAW (CR3, NEF, ARW, DNG) via prévia embutida | C |
+
+### 4.2 Biblioteca e catálogo
+
+| ID | Requisito | Prioridade |
+|---|---|---|
+| RF-10 | **Grade virtualizada** de miniaturas com zoom (tamanho ajustável) | M |
+| RF-11 | Visualização em **linha do tempo** agrupada por ano/mês/dia | M |
+| RF-12 | **Visualizador em tela cheia** com navegação por teclado, zoom e painel de metadados | M |
+| RF-13 | **Avaliação** de 1 a 5 estrelas, **favorito** e **rótulos de cor** | M |
+| RF-14 | **Filtros** combináveis: data, câmera/lente, avaliação, favorito, tag, álbum, rótulo de cor, orientação, com/sem GPS | M |
+| RF-15 | Ordenação por data de captura, data de importação, nome, avaliação | M |
+| RF-16 | **Seleção múltipla** (clique, Shift, Ctrl/Cmd, arrastar) e ações em lote | M |
+| RF-17 | Modo **"Triagem"** (culling): navegação rápida com atalhos para aceitar/rejeitar/avaliar | S |
+| RF-18 | Visualização em **mapa** para fotos com GPS | C |
+| RF-19 | Lixeira do catálogo (remover do catálogo sem apagar o arquivo; apagar do disco com confirmação) | M |
+
+### 4.3 Álbuns
+
+| ID | Requisito | Prioridade |
+|---|---|---|
+| RF-20 | Criar, renomear, excluir **álbuns manuais**; uma foto pode estar em vários álbuns | M |
+| RF-21 | Adicionar fotos a álbuns por arrastar e soltar, menu de contexto ou atalho | M |
+| RF-22 | Definir **capa** do álbum e ordenação manual das fotos dentro dele | S |
+| RF-23 | **Pastas de álbuns** (aninhamento, ex.: "Viagens › 2024 › Portugal") | S |
+| RF-24 | **Álbuns inteligentes** baseados em regras (ex.: "avaliação ≥ 4 E tag = praia E ano = 2024"), atualizados automaticamente | S |
+| RF-25 | **Sugestão de álbuns pela IA** (agrupar fotos por evento/data/local/tema) | C |
+
+### 4.4 Tags e marcação
+
+| ID | Requisito | Prioridade |
+|---|---|---|
+| RF-30 | Adicionar/remover **tags livres** em uma ou várias fotos, com autocompletar | M |
+| RF-31 | **Tags hierárquicas** (ex.: `Lugares/Brasil/Rio de Janeiro`) | S |
+| RF-32 | Gerenciador de tags: renomear, mesclar, excluir, ver contagem de uso | M |
+| RF-33 | Distinção visual entre tags manuais e tags sugeridas pela IA (aceitar/rejeitar) | M |
+| RF-34 | Gravar tags e avaliações de volta nos arquivos (XMP sidecar) | C |
+
+### 4.5 Edição não-destrutiva
+
+Todas as edições são armazenadas como uma **pilha de ajustes** no catálogo; o arquivo original nunca é alterado.
+
+| ID | Requisito | Prioridade |
+|---|---|---|
+| RF-40 | **Cortar**, girar, espelhar e **endireitar**; proporções predefinidas (1:1, 4:5, 16:9, livre) | M |
+| RF-41 | Ajustes básicos: **exposição, contraste, realces, sombras, brancos, pretos** | M |
+| RF-42 | Cor: **temperatura, matiz, vibração, saturação** | M |
+| RF-43 | **Curvas** de tons (RGB e por canal) | S |
+| RF-44 | Nitidez, redução de ruído simples, vinheta | S |
+| RF-45 | **Filtros/predefinições** prontos e predefinições criadas pelo usuário; aplicar em lote | S |
+| RF-46 | **Histórico** com desfazer/refazer ilimitado e "voltar ao original" | M |
+| RF-47 | Comparação **antes/depois** (lado a lado e cortina deslizante) | M |
+| RF-48 | Copiar/colar ajustes entre fotos | S |
+| RF-49 | **Exportar** em JPEG/PNG/WebP com escolha de tamanho, qualidade, remoção de metadados/GPS e exportação em lote | M |
+
+### 4.6 Inteligência artificial (Claude API)
+
+Toda funcionalidade de IA é **opt-in**. Antes do primeiro uso, o app explica que apenas **miniaturas reduzidas** (ex.: lado maior de 1024 px) são enviadas para a API, e o usuário precisa consentir.
+
+| ID | Requisito | Prioridade |
+|---|---|---|
+| RF-50 | **Auto-tagging:** gerar tags (objetos, cenas, cores, atividades, clima) para fotos selecionadas ou para toda a biblioteca | M |
+| RF-51 | **Legendas e descrições:** gerar descrição em linguagem natural de cada foto (usada para a busca) | M |
+| RF-52 | **Busca em linguagem natural:** "praia ao pôr do sol com cachorro", "fotos verticais de café" — combinando descrições geradas, tags e metadados | M |
+| RF-53 | **Sugestões de aprimoramento:** a IA analisa a foto e propõe valores de ajuste (exposição, balanço de branco, corte) aplicados **localmente** como uma edição normal e reversível | S |
+| RF-54 | **Texto alternativo** (acessibilidade) e sugestões de legenda para redes sociais | S |
+| RF-55 | Processamento em **fila** com progresso, pausa, retomada e contagem de fotos a processar | M |
+| RF-56 | **Cache** de resultados: uma foto nunca é reenviada se já foi analisada (salvo pedido explícito) | M |
+| RF-57 | Sugestão de **álbuns/eventos** (ver RF-25) e de **melhores fotos** de uma série | C |
+| RF-58 | Perguntas sobre a biblioteca ("quantas fotos tirei em Lisboa?") | C |
+
+### 4.7 Busca
+
+| ID | Requisito | Prioridade |
+|---|---|---|
+| RF-60 | Barra de busca global (atalho `Ctrl/Cmd + K`) | M |
+| RF-61 | Busca por texto em nome de arquivo, tags, legendas, descrições de IA e metadados | M |
+| RF-62 | Sintaxe de filtros na busca (ex.: `tag:praia ano:2024 nota:>=4`) | S |
+| RF-63 | Busca semântica via IA quando a consulta é linguagem natural (ver RF-52) | M |
+| RF-64 | Salvar uma busca como álbum inteligente | S |
+
+### 4.8 Configurações e dados
+
+| ID | Requisito | Prioridade |
+|---|---|---|
+| RF-70 | Gerenciar pastas da biblioteca (adicionar, remover, reescanear) | M |
+| RF-71 | Ativar/desativar IA; ver quantas fotos já foram analisadas | M |
+| RF-72 | Tema **claro/escuro/sistema** | M |
+| RF-73 | Idioma (pt-BR no MVP; en no futuro) | M |
+| RF-74 | **Backup e restauração** do catálogo (exportar/importar arquivo do banco) | M |
+| RF-75 | Personalização de atalhos de teclado | C |
+| RF-76 | **Login com Google** (OAuth) para usar os recursos de IA; o restante do app funciona sem login | M |
+| RF-77 | Sair da conta e exibir nome/foto do usuário logado | M |
+
+---
+
+## 5. Requisitos não-funcionais
+
+| ID | Categoria | Requisito |
+|---|---|---|
+| RNF-01 | Desempenho | Grade com rolagem a 60 fps em bibliotecas de até **50 mil fotos** |
+| RNF-02 | Desempenho | Abrir uma foto no visualizador em **< 300 ms** (miniatura em cache) |
+| RNF-03 | Desempenho | Importação de 1.000 fotos (indexação + miniaturas) em **< 2 min** em hardware médio |
+| RNF-04 | Desempenho | Ajustes de edição refletidos na prévia em **< 50 ms** (processamento via GPU/WebGL) |
+| RNF-05 | Desempenho | Busca local retorna resultados em **< 200 ms**; busca IA em **< 3 s** |
+| RNF-06 | Privacidade | Arquivos originais **nunca** saem do dispositivo; apenas miniaturas reduzidas vão para a IA, com consentimento |
+| RNF-07 | Privacidade | Metadados GPS **não** são enviados para a IA por padrão |
+| RNF-08 | Privacidade | Conformidade com a **LGPD**: política de privacidade clara, possibilidade de apagar todos os dados de IA |
+| RNF-09 | Segurança | A chave da API do Claude **nunca** fica no navegador; requisições passam por um proxy backend que valida o **login Google** e aplica limite de taxa contra abuso |
+| RNF-10 | Offline | Todas as funções exceto IA funcionam **offline** (PWA instalável) |
+| RNF-11 | Compatibilidade | Suporte completo em **Chrome e Edge** (desktop); Firefox e Safari com fallback (importação por upload para o armazenamento privado do navegador - OPFS) |
+| RNF-12 | Acessibilidade | **WCAG 2.1 nível AA**: navegação completa por teclado, contraste, leitores de tela, texto alternativo |
+| RNF-13 | Confiabilidade | Catálogo salvo de forma transacional; nenhuma perda de dados em caso de fechamento do navegador |
+| RNF-14 | Responsividade | Layout utilizável de 1280 px até 4K; modo de leitura em tablets |
+| RNF-15 | Manutenibilidade | Código em TypeScript estrito, cobertura de testes ≥ 70% na lógica de domínio |
+| RNF-16 | Internacionalização | Todas as strings externalizadas; datas e números no formato local |
+
+---
+
+## 6. Experiência e design
+
+### 6.1 Princípios
+
+1. **As fotos são as protagonistas:** interface escura por padrão, cromo mínimo, painéis recolhíveis.
+2. **Rápido de verdade:** nada bloqueia a interface; tudo pesado roda em segundo plano.
+3. **Teclado primeiro, mouse amigável:** atalhos para tudo (avaliar `1–5`, favorito `F`, rejeitar `X`, editar `E`, buscar `Ctrl+K`).
+4. **Lote por padrão:** qualquer ação que funciona em uma foto funciona em uma seleção.
+5. **IA como assistente, não como dona:** sugestões sempre visíveis, revisáveis e reversíveis.
+6. **Nada é destrutivo sem confirmação:** edição não-destrutiva e lixeira do catálogo.
+
+### 6.2 Telas principais
+
+| Tela | Descrição |
 |---|---|
-| Abertura do app até a grade utilizável | < 2 s (biblioteca de 100 mil fotos) |
-| Rolagem da grade | 60 fps constante, sem "buracos" de miniatura visíveis por mais de 200 ms |
-| Abertura de uma foto em tela cheia | < 150 ms (JPEG) · < 500 ms (RAW, com pré-visualização embutida antes) |
-| Atualização do slider de edição | < 50 ms para a pré-visualização |
-| Busca (texto, filtros, semântica) | < 500 ms (p95) |
-| Importação (sem IA) | ≥ 50 fotos/s em SSD |
-| Indexação de IA (local, GPU média) | ≥ 10 fotos/s, em segundo plano |
-| Escala suportada | 500 mil fotos por biblioteca, sem perder usabilidade |
+| **Biblioteca** | Barra lateral esquerda (Biblioteca, Favoritos, Recentes, Álbuns, Tags, Pastas), grade central com zoom, barra superior com busca e filtros, painel direito recolhível com metadados/tags da seleção |
+| **Visualizador** | Foto em tela cheia, setas para navegar, tira de miniaturas inferior, painel de informações (EXIF, tags, descrição IA, álbuns) |
+| **Editor** | Foto ao centro, painel direito com seções recolhíveis (Corte, Luz, Cor, Curvas, Detalhes, Predefinições), botão "Aprimorar com IA", histórico, antes/depois |
+| **Álbuns** | Grade de álbuns com capas, pastas de álbuns, criação de álbum inteligente com editor de regras visual |
+| **Busca** | Resultados em grade com destaque do motivo do resultado (tag, descrição, metadado) e chips de filtros |
+| **Fila de IA** | Lista de tarefas de IA, progresso, pausar/retomar |
+| **Configurações** | Conta Google (entrar/sair), pastas, IA e privacidade, aparência, idioma, atalhos, backup |
+| **Onboarding** | Boas-vindas → escolher pasta → importação com progresso → convite opcional para entrar com Google e ativar IA |
 
-### 7.2 Confiabilidade e integridade
-- **Nenhuma** operação do app altera os bytes do arquivo original sem uma ação explícita do usuário (ex.: "gravar metadados no arquivo").
-- O catálogo usa transações atômicas e se recupera de quedas de energia sem corromper.
-- A exclusão de arquivos do disco só acontece após a lixeira e com confirmação.
-
-### 7.3 Privacidade e segurança (LGPD/GDPR)
-- **Local-first**: busca, tags e reconhecimento facial funcionam 100% offline por padrão.
-- **Dados biométricos** (rostos) são dados pessoais sensíveis pela LGPD (art. 5º, II). Por isso:
-  - o reconhecimento facial vem **desligado por padrão** e só é ativado com consentimento explícito;
-  - os *embeddings* faciais ficam armazenados apenas no dispositivo e podem ser apagados com um clique;
-  - nada é enviado à nuvem sem um opt-in específico para esse recurso.
-- O app avisa sobre a remoção de GPS e EXIF antes de compartilhar.
-- Se houver nuvem: criptografia em trânsito (TLS 1.3) e em repouso; criptografia ponta a ponta como meta de v2.
-- Telemetria de uso é opt-in, anonimizada e **nunca inclui conteúdo de imagens**.
-
-### 7.4 Usabilidade e acessibilidade
-- Conformidade com **WCAG 2.2 AA**: contraste, navegação completa por teclado e leitores de tela (usando legendas de IA como *alt text*).
-- Tema claro e escuro (o escuro é o padrão para edição, por neutralidade de cor).
-- Onboarding em no máximo 3 passos até a primeira importação.
-- Todo recurso avançado pode ser descoberto, mas é opcional, com uma interface que revela as opções aos poucos (*progressive disclosure*).
-
-### 7.5 Internacionalização
-- No lançamento: **português (BR)** e **inglês**. Arquitetura preparada para outros idiomas.
-- Datas, números e unidades seguem o *locale* do sistema.
-- A busca semântica entende consultas em vários idiomas.
-
-### 7.6 Compatibilidade
-- **MVP: desktop** (Windows 10+ e macOS 13+). Linux é desejável.
-- **v2: mobile** (iOS e Android), como complemento sincronizado.
-- Gerenciamento de cor: respeitar perfis ICC embutidos e o perfil do monitor.
+### 6.3 Estados importantes
+- **Biblioteca vazia:** chamada clara para "Adicionar pasta" com ilustração.
+- **Permissão de pasta perdida** (navegador revogou acesso): banner pedindo para reautorizar.
+- **Offline:** recursos de IA desativados com aviso discreto.
+- **Erro de IA / serviço indisponível:** mensagem clara e opção de tentar depois.
+- **Não logado:** recursos de IA mostram botão "Entrar com Google".
 
 ---
 
-## 8. Experiência do usuário
+## 7. Arquitetura proposta
 
-### 8.1 Estrutura de navegação
+### 7.1 Visão geral
 
 ```
-┌───────────────┬──────────────────────────────────────────┬──────────────┐
-│ BARRA LATERAL │  [ 🔍 Busca universal ............ ] [⚙] │   PAINEL     │
-│               │                                          │   INFO       │
-│ Biblioteca    │  ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐      │              │
-│  • Todas      │  │    │ │    │ │    │ │    │ │    │      │  Metadados   │
-│  • Favoritas  │  └────┘ └────┘ └────┘ └────┘ └────┘      │  Tags        │
-│  • Recentes   │  ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐      │  Álbuns      │
-│  • Lixeira    │  │    │ │    │ │    │ │    │ │    │      │  Pessoas     │
-│ Pessoas       │  └────┘ └────┘ └────┘ └────┘ └────┘      │  Mapa        │
-│ Lugares       │                                          │              │
-│ Álbuns   [+]  │        GRADE / LINHA DO TEMPO            │              │
-│  ▸ Viagens    │                                          │              │
-│  ▸ Família    │                                          │              │
-│ Álb. intelig. │                                          │              │
-│ Tags          │  [Zoom ──●──]  1.234 fotos · 12 selec.   │              │
-└───────────────┴──────────────────────────────────────────┴──────────────┘
+┌────────────────────────── Navegador (PWA) ──────────────────────────┐
+│                                                                     │
+│  UI (React + TypeScript)                                            │
+│   ├─ Biblioteca / Visualizador / Editor / Álbuns / Busca            │
+│   └─ Estado (Zustand) + consultas reativas ao catálogo              │
+│                                                                     │
+│  Web Workers                                                        │
+│   ├─ Varredura de pastas, hash (SHA-256 / pHash), EXIF              │
+│   ├─ Geração de miniaturas (OffscreenCanvas)                        │
+│   └─ Índice de busca (full-text)                                    │
+│                                                                     │
+│  Motor de edição (WebGL2) ── pilha de ajustes → prévia / exportação │
+│                                                                     │
+│  Armazenamento local                                                │
+│   ├─ Catálogo: SQLite WASM persistido em OPFS                       │
+│   ├─ Miniaturas: OPFS                                               │
+│   └─ Originais: disco do usuário (File System Access API handles)   │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                │ HTTPS (só miniaturas + texto)
+                     ┌──────────▼──────────┐
+                     │  Proxy de IA        │  valida login Google, limite de
+                     │  (serverless/Node)  │  taxa, sem guardar fotos
+                     └──────────┬──────────┘
+                                │
+                     ┌──────────▼──────────┐
+                     │  Claude API         │
+                     └─────────────────────┘
 ```
 
-**Modos principais:** Biblioteca (grade e linha do tempo) → Visualizador (uma foto) → Editor (painel de ajustes à direita, filmstrip embaixo).
+### 7.2 Stack sugerida
 
-### 8.2 Fluxos-chave
+| Camada | Tecnologia |
+|---|---|
+| Front-end | React 19 + TypeScript + Vite |
+| UI | Tailwind CSS + Radix UI (componentes acessíveis) |
+| Estado | Zustand + TanStack Query |
+| Virtualização da grade | TanStack Virtual |
+| Catálogo | SQLite WASM (OPFS) com FTS5 para busca textual |
+| Metadados | `exifr` |
+| Edição | WebGL2 (shaders próprios) |
+| PWA/offline | Workbox (service worker) |
+| Autenticação | Login com Google (Google Identity Services / OAuth 2.0); token validado no proxy |
+| Proxy de IA | Função serverless (Node/TypeScript) com SDK oficial da Anthropic |
+| IA | Claude API — modelo com visão (ex.: `claude-sonnet-5-5`) para tags, legendas e sugestões; respostas em JSON estruturado |
+| Testes | Vitest (unidade), Playwright (ponta a ponta) |
 
-1. **Primeira execução**: boas-vindas → escolher pastas ou importar → escolher os recursos de IA desejados (com explicação de privacidade) → a grade aparece **na hora**, enquanto a indexação continua em segundo plano.
-2. **Encontrar uma foto**: o usuário digita na busca → recebe sugestões (pessoas, tags, lugares) → os resultados se atualizam enquanto ele digita → refina com facetas → abre a foto.
-3. **Organizar um evento**: a IA sugere o álbum "Casamento da Júlia – 12/04" → o usuário revisa as fotos incluídas → aceita → a IA sugere as 20 melhores → o usuário marca como favoritas.
-4. **Editar e exportar**: abre a foto → clica em "Auto-aprimorar" → faz o ajuste fino → copia os ajustes para mais 15 fotos → exporta com o preset "Instagram".
-5. **Revisar as sugestões da IA**: um painel "Revisar" mostra as tags sugeridas e os rostos não nomeados, com ações rápidas (✓ / ✗ / atalho de teclado).
+### 7.3 Fluxo da IA
 
-### 8.3 Diretrizes de design
-- O conteúdo (as fotos) é o protagonista. A interface é neutra e minimalista e some em tela cheia.
-- Microinterações suaves (transições de 150–250 ms), sem chegar a atrasar o uso.
-- Feedback imediato: toda ação longa mostra progresso e pode ser cancelada.
-- Estados vazios ensinam a usar o app ("Arraste fotos aqui ou clique em Importar").
+1. Usuário seleciona fotos e clica em "Analisar com IA" (ou ativa análise automática).
+2. Worker gera miniatura de 1024 px (sem EXIF/GPS) e a coloca na fila.
+3. Cliente envia lotes ao proxy; proxy valida o token do login Google e chama a Claude API pedindo um **JSON estruturado**: `{ tags[], descricao, alt_text, sugestoes_ajuste{} }`.
+4. Resultado salvo em `AIAnnotation`; tags entram como "sugeridas"; descrição é indexada no FTS.
+5. **Busca em linguagem natural:** a consulta é enviada ao proxy, que a converte em termos/sinônimos e filtros estruturados (ex.: `{termos:["praia","pôr do sol","cachorro"], ano:null}`); a busca executa **localmente** sobre descrições, tags e metadados. Opcionalmente, a IA reordena os ~50 melhores candidatos usando as descrições (sem reenviar imagens).
 
 ---
 
-## 9. Arquitetura (proposta de alto nível)
-
-> Esta seção é uma recomendação inicial para orientar a discussão técnica. Ela não é uma decisão final.
-
-| Camada | Proposta | Justificativa |
-|---|---|---|
-| **App desktop** | Tauri (Rust) + React/TypeScript, **ou** Electron + React | Multiplataforma. O Tauri gera binários menores e dá acesso nativo ao processamento de imagem |
-| **Catálogo** | SQLite (modo WAL) + extensão vetorial (ex.: sqlite-vec) | Embutido, rápido, transacional e com busca vetorial local |
-| **Processamento de imagem** | libvips (miniaturas, exportação) + LibRaw (RAW) + pipeline de edição em GPU (WebGPU/wgpu ou shaders) | Desempenho com imagens grandes e edição em tempo real |
-| **IA local** | ONNX Runtime com modelos tipo CLIP/SigLIP (busca e tags), detector e embedder facial, OCR, Real-ESRGAN (upscale), LaMa (inpainting), segmentação (tipo SAM) | Funciona offline e preserva a privacidade |
-| **IA em nuvem (opcional)** | API de modelo multimodal para legendas ricas, edição por comando de texto e recursos pesados | Para recursos que não cabem no dispositivo, sempre opt-in |
-| **Cache** | Pirâmide de miniaturas (256, 1024 e 2048 px) em disco | Grade instantânea e visualização rápida |
-| **Fila de tarefas** | *Worker pool* com prioridades (a interface vem antes da importação, que vem antes da IA) | A interface nunca trava |
-
-### 9.1 Modelo de dados (simplificado)
+## 8. Modelo de dados
 
 ```
-Asset         (id, caminho, hash, tipo, largura, altura, data_captura, data_import,
-               avaliacao, favorito, rotulo_cor, pick_status, gps_lat, gps_lng,
-               camera, lente, iso, abertura, velocidade, excluido_em)
-Edit          (id, asset_id, versao, pilha_ajustes_json, criado_em, snapshot_nome)
-Album         (id, nome, pai_id, tipo[manual|inteligente|sugerido], regras_json, capa_asset_id)
-AlbumAsset    (album_id, asset_id, ordem)
-Tag           (id, nome, pai_id)
-AssetTag      (asset_id, tag_id, origem[usuario|ia], confianca, confirmado)
-Person        (id, nome, capa_face_id)
-Face          (id, asset_id, bbox, embedding, person_id, confirmado)
-Embedding     (asset_id, modelo, vetor)
-OcrText       (asset_id, texto)
-Stack         (id, capa_asset_id) / StackMember (stack_id, asset_id)
+Photo
+  id, folder_id, relative_path, file_name, file_size, mime_type,
+  sha256, phash, width, height, orientation,
+  taken_at, imported_at, camera_make, camera_model, lens,
+  iso, aperture, shutter_speed, focal_length, gps_lat, gps_lng,
+  rating (0–5), is_favorite, color_label, is_rejected, deleted_at
+
+Folder        id, name, handle_ref, last_scanned_at
+Album         id, name, parent_id (pasta de álbuns), cover_photo_id,
+              type (manual | smart), created_at, sort_mode
+AlbumPhoto    album_id, photo_id, position
+SmartAlbumRule id, album_id, field, operator, value, group (AND/OR)
+Tag           id, name, parent_id (hierarquia), color
+PhotoTag      photo_id, tag_id, source (manual | ai), confidence, status (suggested | accepted | rejected)
+Edit          id, photo_id, version, adjustments_json, created_at   -- pilha não-destrutiva
+Preset        id, name, adjustments_json, is_builtin
+AIAnnotation  photo_id, model, description, alt_text, raw_json, analyzed_at
+AIJob         id, type, status, photo_ids, progress, error, created_at
+Export        id, photo_ids, settings_json, created_at
 ```
+
+Índices: `taken_at`, `sha256`, `rating`, `PhotoTag(tag_id)`, tabela FTS5 sobre `file_name + tags + description + alt_text`.
 
 ---
 
-## 10. Métricas de sucesso
+## 9. User stories e critérios de aceite
 
-| Categoria | Métrica | Meta (6 meses após o lançamento) |
-|---|---|---|
-| **Ativação** | % de usuários que importam ≥ 100 fotos no 1º dia | ≥ 70% |
-| **Organização** | % de usuários ativos com ≥ 1 álbum ou ≥ 10 tags | ≥ 50% |
-| **Busca** | % de buscas seguidas de abrir uma foto (sucesso) | ≥ 60% |
-| **Busca** | Tempo mediano entre a busca e abrir a foto | < 10 s |
-| **IA** | Taxa de aceitação das tags sugeridas | ≥ 70% |
-| **IA** | % de usuários que usam ≥ 1 recurso de aprimoramento por semana | ≥ 30% |
-| **Edição** | % de usuários ativos que editam ≥ 1 foto por semana | ≥ 25% |
-| **Retenção** | Retenção D30 | ≥ 40% |
-| **Qualidade** | Sessões sem crash | ≥ 99,5% |
-| **Satisfação** | NPS | ≥ 40 |
+### US-01 — Importar uma pasta
+**Como** Marina, **quero** adicionar a pasta do meu HD **para** ver todas as minhas fotos no app.
+- **Dado** que estou na biblioteca vazia, **quando** clico em "Adicionar pasta" e autorizo o acesso, **então** o app varre a pasta recursivamente e mostra o progresso.
+- **Dado** que a importação está em andamento, **quando** navego no app, **então** as fotos já processadas aparecem na grade e a interface não trava.
+- **Dado** que uma foto já existe na biblioteca (mesmo hash), **quando** importo novamente, **então** ela não é duplicada.
+
+### US-02 — Criar um álbum e adicionar fotos
+**Como** Carlos, **quero** criar o álbum "Natal 2024" **para** reunir as fotos do evento.
+- **Dado** que selecionei 30 fotos, **quando** escolho "Adicionar ao álbum › Novo álbum" e digito o nome, **então** o álbum é criado contendo as 30 fotos.
+- **Dado** que uma foto está no álbum, **quando** a removo do álbum, **então** ela continua na biblioteca.
+
+### US-03 — Marcar fotos em lote
+**Como** Júlia, **quero** aplicar a tag "Cliente Café Aroma" em várias fotos **para** encontrá-las depois.
+- **Dado** que selecionei várias fotos, **quando** digito uma tag no painel de tags, **então** ela é aplicada a todas e o autocompletar sugere tags existentes.
+- **Dado** que a IA sugeriu tags, **quando** clico em "aceitar todas", **então** elas passam de "sugeridas" para "aceitas".
+
+### US-04 — Editar e exportar
+**Como** Marina, **quero** ajustar a exposição e cortar uma foto **para** publicá-la.
+- **Dado** que abri o editor, **quando** movo o controle de exposição, **então** a prévia atualiza em tempo real (< 50 ms).
+- **Dado** que fiz edições, **quando** clico em "Voltar ao original", **então** a foto volta ao estado original e o arquivo em disco nunca foi alterado.
+- **Dado** que terminei a edição, **quando** exporto em JPEG 2048 px qualidade 85% sem GPS, **então** o arquivo é salvo na pasta escolhida com essas configurações.
+
+### US-05 — Aprimorar com IA
+**Como** Carlos, **quero** clicar em "Aprimorar com IA" **para** melhorar uma foto escura sem entender de edição.
+- **Dado** que a IA está ativada, **quando** clico em "Aprimorar com IA", **então** os ajustes sugeridos são aplicados como uma edição visível no histórico e posso desfazê-los.
+
+### US-06 — Buscar em linguagem natural
+**Como** Carlos, **quero** digitar "vovó no sítio com as galinhas" **para** achar a foto sem lembrar a data.
+- **Dado** que as fotos foram analisadas pela IA, **quando** digito a frase na busca, **então** recebo resultados relevantes em < 3 s, com indicação do motivo de cada resultado.
+- **Dado** que estou offline, **quando** faço a mesma busca, **então** o app faz busca textual local e avisa que a busca inteligente está indisponível.
+
+### US-07 — Consentimento de IA
+**Como** usuário preocupado com privacidade, **quero** entender o que é enviado **para** decidir se ativo a IA.
+- **Dado** que nunca usei a IA, **quando** clico em qualquer função de IA, **então** vejo uma explicação (o que é enviado e o que não é) e só prossigo após aceitar.
+- **Dado** que ativei a IA, **quando** desativo e escolho "apagar dados de IA", **então** todas as descrições e tags de IA são removidas.
+
+### US-08 — Entrar com Google
+**Como** usuário, **quero** entrar com minha conta Google **para** usar os recursos de IA sem criar senha.
+- **Dado** que não estou logado, **quando** clico em uma função de IA, **então** vejo o botão "Entrar com Google" e, após autorizar, a ação continua.
+- **Dado** que não estou logado, **quando** uso biblioteca, álbuns, tags e edição, **então** tudo funciona normalmente sem login.
 
 ---
 
-## 11. Roadmap por fases
+## 10. Escopo por fase
 
-### Fase 1 — MVP (fundação)
-Objetivo: um catálogo rápido e confiável, com organização manual sólida e busca básica por IA.
-- Importação (IMP-01, 02, 05, 06, 08, 10), biblioteca e visualizador (BIB-01 a 04, 07 a 09, 11)
-- Álbuns manuais (ALB-01 a 03, 07), tags, estrelas e favoritos (TAG-01, 03, 05, 10)
-- Edição não destrutiva básica (EDT-01 a 04, 08 a 11, 13)
-- IA: busca semântica (IA-01), auto-tagging (IA-02), auto-aprimorar (IA-20)
-- Busca unificada com facetas (BUS-01, 02, 05, 06)
-- Exportação básica (EXP-01, 03, 05), backup do catálogo (SYN-01)
+### MVP (v1.0)
+- Importação de pastas (RF-01 a RF-05), biblioteca, linha do tempo, visualizador, avaliação/favoritos/rótulos, filtros e seleção em lote.
+- Álbuns manuais; tags livres e gerenciador de tags.
+- Edição básica não-destrutiva (corte, luz, cor, histórico, antes/depois, exportação).
+- IA: auto-tagging, descrições, busca em linguagem natural, fila e cache, consentimento.
+- Login com Google para os recursos de IA.
+- Tema claro/escuro, pt-BR, backup do catálogo, PWA offline.
 
-### Fase 2 — v1 (poder)
-Objetivo: atender entusiastas e automatizar a organização.
-- RAW, vídeos (catalogação), watch folders e quase duplicatas
-- Álbuns inteligentes e sugeridos, tags hierárquicas, XMP, mapa, pilhas
-- Edição avançada (curvas, HSL, detalhe, lente, versões virtuais)
-- IA: reconhecimento facial, similaridade, OCR, curadoria, upscaling, redução de ruído, remoção de objetos e de fundo
+### v1.1
+- Álbuns inteligentes e pastas de álbuns; tags hierárquicas.
+- Modo triagem; curvas, nitidez, vinheta; predefinições e copiar/colar ajustes.
+- Detecção de duplicatas e quase duplicatas.
+- IA: "Aprimorar com IA", texto alternativo e legendas para redes sociais.
 
-### Fase 3 — v2 (expansão)
-Objetivo: um ecossistema em vários dispositivos com recursos criativos.
-- App mobile e sincronização, backup em nuvem, compartilhamento de álbuns
-- Máscaras locais, restauração de fotos antigas, edição por comando de texto
-- Memórias, importação de serviços de nuvem, marca d'água
+### v2.0
+- Sincronização opcional do catálogo (não das fotos) entre dispositivos.
+- Mapa, suporte a RAW, gravação em XMP.
+- Sugestão de álbuns/eventos e melhores fotos pela IA; perguntas sobre a biblioteca.
+- Reconhecimento de pessoas (com processamento local e consentimento reforçado).
+- Compartilhamento de álbuns por link; versão mobile.
+
+---
+
+## 11. Métricas de sucesso
+
+| Métrica | Meta (3 meses após lançamento) |
+|---|---|
+| Ativação: usuários que importam ≥ 1 pasta no primeiro uso | ≥ 70% |
+| Tempo até a primeira foto na grade | < 60 s |
+| % de fotos com ao menos uma tag (manual ou IA) | ≥ 60% |
+| Adoção da IA (usuários que dão consentimento) | ≥ 50% |
+| Taxa de sucesso da busca IA (clique no top 10) | ≥ 80% |
+| Retenção D7 / D30 | ≥ 40% / ≥ 25% |
+| Fotos editadas e exportadas por usuário ativo/mês | ≥ 10 |
+| NPS | ≥ 40 |
 
 ---
 
 ## 12. Riscos e mitigações
 
-| Risco | Impacto | Probabilidade | Mitigação |
-|---|---|---|---|
-| A IA local é lenta em máquinas modestas | Alto | Média | Modelos quantizados, indexação incremental e ociosa, fallback opcional para a nuvem |
-| O tamanho do instalador cresce com os modelos de IA | Médio | Alta | Baixar os modelos sob demanda, só dos recursos ativados |
-| Baixa precisão das tags e do reconhecimento facial em português | Médio | Média | Modelos multilíngues, um limiar de confiança ajustável e o fluxo de revisão "a IA sugere, o usuário decide" |
-| Questões legais com biometria (LGPD) | Alto | Média | Opt-in explícito, processamento local, exclusão fácil, revisão jurídica antes da Fase 2 |
-| Corrupção do catálogo ou perda de dados | Crítico | Baixa | SQLite transacional, backups automáticos, o original nunca é tocado |
-| Suporte a RAW variado e complexo | Médio | Alta | Usar o LibRaw, priorizar as câmeras mais populares e usar a pré-visualização embutida como fallback |
-| Desempenho com bibliotecas muito grandes | Alto | Média | Virtualização, cache de miniaturas, índices de banco e testes de carga com 500 mil fotos desde cedo |
-| Concorrência (Google, Apple, Adobe) | Alto | Alta | Diferenciar por privacidade, dados abertos, ausência de lock-in e equilíbrio entre simplicidade e poder |
+| Risco | Impacto | Mitigação |
+|---|---|---|
+| File System Access API indisponível no Firefox/Safari | Alto | Fallback com importação para OPFS; comunicar navegadores recomendados |
+| Navegador revoga permissão de pasta entre sessões | Médio | Persistir handles no IndexedDB, pedir reautorização com um clique; miniaturas continuam disponíveis |
+| Análise de IA demorada em bibliotecas grandes | Médio | Miniaturas pequenas, cache, processamento em lote e em segundo plano |
+| Privacidade / LGPD | Alto | Opt-in explícito, sem GPS/EXIF enviados, proxy sem retenção, opção de apagar dados de IA, política clara |
+| Desempenho com 50k+ fotos | Médio | Virtualização, Web Workers, SQLite indexado, testes de carga desde o início |
+| Limite de armazenamento do navegador (miniaturas/OPFS) | Médio | Miniaturas compactas (WebP), solicitar armazenamento persistente, monitorar quota |
+| HEIC/RAW sem suporte nativo | Médio | Decodificadores WASM em fase posterior; usar prévia embutida |
+| Qualidade/alucinação das tags da IA | Médio | Tags marcadas como "sugeridas", com aceitar/rejeitar; prompts com JSON estruturado e testes de avaliação |
 
 ---
 
 ## 13. Questões em aberto
 
-1. **Plataforma do MVP**: desktop primeiro (premissa deste documento), web ou mobile?
-2. **Modelo de negócio**: gratuito com recursos de IA premium (freemium), compra única ou assinatura? Os recursos de IA em nuvem têm custo variável que precisa ser coberto.
-3. **Nuvem própria**: vamos oferecer armazenamento próprio ou só integrar com provedores existentes?
-4. **Stack**: Tauri ou Electron? A decisão depende da experiência da equipe e do peso do processamento nativo.
-5. **Quais modelos de IA específicos**: avaliar os modelos (licenças comerciais, precisão em PT-BR, tamanho) antes da Fase 1.
-6. **Público-alvo principal do MVP**: consumidor geral (Ana) ou entusiasta (Bruno)? Isso afeta a prioridade de RAW e da edição avançada.
-7. **Colaboração**: álbuns compartilhados exigem contas de usuário e backend. Isso entra no roadmap ou fica de fora?
+| # | Questão |
+|---|---|
+| Q1 | Nome final do produto e identidade visual |
+| Q2 | Suporte a RAW entra antes da v2? |
+| Q3 | Reconhecimento facial: viável localmente no navegador e aceitável sob a LGPD? |
+| Q4 | Análise de IA automática para fotos novas ou sempre sob demanda? |
+| Q5 | Suporte a vídeos (listagem, miniatura, reprodução) no MVP? |
 
 ---
 
@@ -425,12 +465,16 @@ Objetivo: um ecossistema em vários dispositivos com recursos criativos.
 
 | Termo | Definição |
 |---|---|
-| **Edição não destrutiva** | Os ajustes são gravados como instruções e aplicados na visualização e na exportação. O arquivo original não muda. |
-| **Embedding** | Representação numérica (vetor) de uma imagem ou texto. Permite comparar significado e similaridade. |
-| **Busca semântica** | Busca pelo significado do conteúdo, e não só por palavras-chave ou nomes de arquivo. |
-| **Álbum inteligente** | Álbum cujo conteúdo é definido por regras e se atualiza sozinho. |
-| **XMP sidecar** | Arquivo `.xmp` ao lado da foto, com metadados num padrão aberto que outros apps também leem. |
-| **Inpainting** | Técnica de IA que preenche uma área removida da imagem de forma realista. |
-| **Upscaling** | Aumentar a resolução da imagem com IA, recriando detalhes. |
-| **Pilha (stack)** | Grupo de fotos relacionadas exibidas como uma só (ex.: RAW+JPEG, sequência). |
-| **Local-first** | O app funciona e guarda os dados no dispositivo. A nuvem é opcional. |
+| **Local-first** | Arquitetura em que os dados vivem primariamente no dispositivo do usuário e funcionam offline |
+| **Catálogo** | Banco de dados do app com metadados, álbuns, tags e edições — separado dos arquivos de foto |
+| **Edição não-destrutiva** | Edições salvas como instruções; o arquivo original nunca é modificado |
+| **EXIF / IPTC / XMP** | Padrões de metadados embutidos em arquivos de imagem |
+| **OPFS** | Origin Private File System — sistema de arquivos privado do navegador |
+| **File System Access API** | API do navegador que permite ler/gravar pastas do disco com permissão do usuário |
+| **pHash** | Hash perceptual — identifica imagens visualmente semelhantes |
+| **Álbum inteligente** | Álbum cujo conteúdo é definido por regras e atualizado automaticamente |
+| **Triagem (culling)** | Processo de revisar rapidamente uma sessão para escolher as melhores fotos |
+| **PWA** | Progressive Web App — app web instalável e com funcionamento offline |
+| **FTS5** | Extensão de busca textual completa do SQLite |
+| **OAuth / Login com Google** | Padrão de autenticação em que o usuário entra com a conta Google, sem criar senha no app |
+| **MoSCoW** | Método de priorização: Must, Should, Could, Won't |
